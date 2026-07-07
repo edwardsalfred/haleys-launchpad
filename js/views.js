@@ -45,7 +45,7 @@ window.Views = (function () {
         <h1>Haley's <span class="grad">Launchpad</span></h1>
         <p class="tagline">3rd grade adventures in Math &amp; Reading<br>aligned to the Mississippi standards</p>
       </div>
-      ${Store.mode === "local" ? `<div class="demo-banner">🧪 Demo mode — progress saves on this device only. Add your Supabase keys in js/config.js for real accounts.</div>` : ""}
+      ${Store.mode === "local" ? `<div class="demo-banner">🧪 Demo mode. Progress saves on this device only. Add your Supabase keys in js/config.js for real accounts.</div>` : ""}
       <div class="panel">
         <h3 class="center" style="margin-bottom:12px">${isUp ? "Create your family account" : "Grown-up sign in"}</h3>
         <form id="auth-form">
@@ -72,7 +72,7 @@ window.Views = (function () {
           ? `Already set up? <button class="link-btn" id="switch">Sign in</button>`
           : `First time here? <button class="link-btn" id="switch">Create an account</button>`}</p>
       </div>
-      ${cosmoSays("Hi! I'm <b>Cosmo</b>! A grown-up sets things up first — then it's blast-off time! 🎉")}
+      ${cosmoSays("Hi! I'm <b>Cosmo</b>! A grown-up sets things up first, then it's blast-off time! 🎉")}
     </div>`;
 
     el.querySelector("#switch").addEventListener("click", () => welcome(el, isUp ? "signin" : "signup"));
@@ -164,7 +164,7 @@ window.Views = (function () {
         <div class="form-error" id="setup-error"></div>
         <button class="btn btn-big btn-mint" id="setup-save">Blast off! 🚀</button>
       </div>
-      ${cosmoSays("A cadet name, a school, a space buddy, and a secret code — then we're launching! 🌠")}
+      ${cosmoSays("A cadet name, a school, a space buddy, and a secret code, then we're launching! 🌠")}
     </div>`;
 
     const pickBox = el.querySelector("#avatar-pick");
@@ -355,7 +355,7 @@ window.Views = (function () {
           <span class="cc-sub">${Content.getUnit(contModule.unitId).title} · ~${contModule.minutes || 20} min</span>
         </span>
         <span class="btn btn-mint" style="min-height:44px;padding:8px 16px">GO!</span>
-      </button>` : `<div class="panel center"><b>🏆 Every mission complete — you're a legend, Cadet!</b></div>`}
+      </button>` : `<div class="panel center"><b>🏆 Every mission complete. You're a legend, Cadet!</b></div>`}
 
       <button class="galaxy-card math" data-route="#/map/math">
         <span class="g-deco">🪐</span>
@@ -384,7 +384,7 @@ window.Views = (function () {
     if (streak >= 3) return `🔥 <b>${streak} days in a row!</b> Keep that rocket burning!`;
     if (math.done === 0 && ela.done === 0) return "Ready for your very first mission? Tap the green <b>GO!</b> button!";
     if (math.pct >= 100) return "🪐 <b>Math Galaxy complete!</b> Incredible flying, Cadet!";
-    return "One mission at a time — that's how great explorers do it! 💪";
+    return "One mission at a time. That's how great explorers do it! 💪";
   }
 
   /* ================= GALAXY MAP ================= */
@@ -514,7 +514,7 @@ window.Views = (function () {
         ${screen.checklist.map((c) => `<li><input type="checkbox"> <span>${c}</span></li>`).join("")}
       </ul>` : ""}
       <textarea class="writing-area" placeholder="Type your writing here..."></textarea>
-      <p class="muted mt">Your writing goes to a grown-up to read — it doesn't need a score to keep going. 💌</p>`;
+      <p class="muted mt">Your writing goes to a grown-up to read. It doesn't need a score to keep going. 💌</p>`;
   }
 
   /* ================= QUIZ ================= */
@@ -568,7 +568,7 @@ window.Views = (function () {
           ? cosmoSays(pct === 100
               ? "A <b>perfect score</b>?! You're a superstar! 🌟"
               : "You passed! The next mission is unlocked. Want to try again later for 3 stars?")
-          : cosmoSays(`You need <b>${CCA_CONFIG.PASS_PCT}%</b> to unlock the next mission. Let's look at the lesson again — you've got this! 💪`)}
+          : cosmoSays(`You need <b>${CCA_CONFIG.PASS_PCT}%</b> to unlock the next mission. Let's look at the lesson again. You've got this! 💪`)}
       </div>
       <div class="btn-row" style="flex-direction:column">
         ${passed && nextUnlocked ? `<button class="btn btn-big btn-mint" id="go-next">Next Mission: ${esc(nextMod.title)} 🚀</button>` : ""}
@@ -628,7 +628,7 @@ window.Views = (function () {
     el.querySelector("[data-route]").addEventListener("click", (e) => App.go(e.currentTarget.dataset.route));
     el.querySelector("#gate-go").addEventListener("click", () => {
       if (Number(el.querySelector("#gate").value) === a * b) App.go("#/parent");
-      else el.querySelector("#gate-err").textContent = "Hmm, not quite — try again.";
+      else el.querySelector("#gate-err").textContent = "Hmm, not quite. Try again.";
     });
   }
 
@@ -643,7 +643,7 @@ window.Views = (function () {
         <button class="back-btn" data-route="#/dashboard">←</button>
         <h2>👨‍👩‍👧 Parent Dashboard</h2>
       </div>
-      ${Store.mode === "local" ? `<div class="demo-banner">🧪 Demo mode — data lives in this browser only. Configure Supabase (see README) for real accounts &amp; sync.</div>` : ""}
+      ${Store.mode === "local" ? `<div class="demo-banner">🧪 Demo mode. Data lives in this browser only. Configure Supabase (see README) for real accounts &amp; sync.</div>` : ""}
       ${reports.map(({ kid, prog }) => {
         const math = Content.trackStats("math", prog.progressMap);
         const ela = Content.trackStats("ela", prog.progressMap);
@@ -662,17 +662,17 @@ window.Views = (function () {
             <h4 class="mt">✍️ Writing to review (${kidWritings.length})</h4>
             ${kidWritings.slice(0, 5).map((w) => `
               <div class="writing-review">
-                <div class="wr-prompt">${esc(Content.getModule(w.moduleId)?.title || w.moduleId)} — ${esc(w.prompt)}</div>
+                <div class="wr-prompt">${esc(Content.getModule(w.moduleId)?.title || w.moduleId)}: ${esc(w.prompt)}</div>
                 <div class="wr-text">${esc(w.text)}</div>
               </div>`).join("")}` : ""}
         </div>`;
       }).join("")}
       <div class="panel mt">
         <h3>About this course</h3>
-        <p class="muted mt">Content is aligned to the Mississippi College- and Career-Readiness Standards for Grade 3 —
+        <p class="muted mt">Content is aligned to the Mississippi College and Career Readiness Standards for Grade 3.
         every math standard (3.OA, 3.NBT, 3.NF, 3.MD, 3.G) plus an ELA unit built on the MDE "Characters' Contributions"
         exemplar (RL.3.3, RL.3.1, L.3.4a, L.3.2c, W.3.1). A mission is passed at ${CCA_CONFIG.PASS_PCT}%+ on its quiz;
-        passing unlocks the next mission. Writing missions are saved here for you to read — they are not auto-graded.</p>
+        Passing unlocks the next mission. Writing missions are saved here for you to read. They are not auto-graded.</p>
         <div class="btn-row">
           <button class="btn btn-ghost" id="switch-kid">Switch cadet</button>
           <button class="btn btn-coral" id="signout">Sign out</button>
