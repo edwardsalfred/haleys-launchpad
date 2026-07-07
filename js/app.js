@@ -91,6 +91,15 @@ window.App = {
       return Views.profiles(el);
     }
 
+    // First-run: parent has pending child info (from signup) and no students yet
+    if (this.parent?.pendingChild && view !== "setup-first-kid") {
+      const kids = await Store.listStudents();
+      if (kids.length === 0) {
+        document.getElementById("bottom-nav").classList.add("hidden");
+        return Views.setupFirstKid(el);
+      }
+    }
+
     // bottom nav visibility: kid-facing views only
     const showNav = ["dashboard", "map", "badges"].includes(view);
     document.getElementById("bottom-nav").classList.toggle("hidden", !showNav);
@@ -101,6 +110,7 @@ window.App = {
 
     switch (view) {
       case "welcome": return Views.welcome(el);
+      case "setup-first-kid": return Views.setupFirstKid(el);
       case "profiles": return Views.profiles(el);
       case "pin": return Views.pinEntry(el, arg);
       case "dashboard": await this.refreshProgress(); return Views.dashboard(el);
@@ -137,6 +147,10 @@ window.App = {
     window.addEventListener("hashchange", () => this.route());
 
     if (!this.parent) this.go("#/welcome");
+    else if (this.parent.pendingChild) {
+      const kids = await Store.listStudents();
+      this.go(kids.length === 0 ? "#/setup-first-kid" : "#/profiles");
+    }
     else if (!this.student) this.go("#/profiles");
     else this.go("#/dashboard");
     this.route();

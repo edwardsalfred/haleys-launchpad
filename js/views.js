@@ -49,10 +49,22 @@ window.Views = (function () {
       <div class="panel">
         <h3 class="center" style="margin-bottom:12px">${isUp ? "Create your family account" : "Grown-up sign in"}</h3>
         <form id="auth-form">
+          ${isUp ? `
+          <div class="field"><label for="first-name">Your first name</label>
+            <input id="first-name" autocomplete="given-name" required maxlength="40" placeholder="e.g. Alfred"></div>
+          <div class="field"><label for="last-name">Your last name</label>
+            <input id="last-name" autocomplete="family-name" required maxlength="40" placeholder="e.g. Edwards"></div>
+          ` : ""}
           <div class="field"><label for="email">Parent email</label>
             <input id="email" type="email" autocomplete="email" required placeholder="you@example.com"></div>
           <div class="field"><label for="password">Password</label>
             <input id="password" type="password" autocomplete="${isUp ? "new-password" : "current-password"}" required minlength="${isUp ? 12 : 6}" placeholder="${isUp ? "At least 12 characters" : "Your password"}"></div>
+          ${isUp ? `
+          <div class="field"><label for="child-name">Your child's first name</label>
+            <input id="child-name" required maxlength="20" placeholder="e.g. Haley"></div>
+          <div class="field"><label for="child-school">Your child's school</label>
+            <input id="child-school" required maxlength="80" placeholder="e.g. Sunnybrook Elementary"></div>
+          ` : ""}
           <div class="form-error" id="auth-error"></div>
           <button class="btn btn-big" type="submit">${isUp ? "Create Account 🌟" : "Sign In 🚀"}</button>
         </form>
@@ -73,7 +85,19 @@ window.Views = (function () {
       try {
         if (isUp) {
           if (pw.length < 12) throw new Error("Password must be at least 12 characters.");
-          const res = await Store.signUp(email, pw);
+          const firstName = el.querySelector("#first-name").value.trim();
+          const lastName = el.querySelector("#last-name").value.trim();
+          const childName = el.querySelector("#child-name").value.trim();
+          const childSchool = el.querySelector("#child-school").value.trim();
+          if (!firstName || !lastName) throw new Error("Please enter your first and last name.");
+          if (!childName) throw new Error("Please enter your child's first name.");
+          if (!childSchool) throw new Error("Please enter your child's school.");
+          const res = await Store.signUp(email, pw, {
+            first_name: firstName,
+            last_name: lastName,
+            pending_child_name: childName,
+            pending_child_school: childSchool,
+          });
           if (res && res.needsConfirmation) {
             checkEmail(el, email);
             return;
@@ -81,7 +105,11 @@ window.Views = (function () {
         } else {
           await Store.signIn(email, pw);
         }
-        App.parent = { email };
+        App.parent = await Store.getParent();
+        if (App.parent?.pendingChild) {
+          const kids = await Store.listStudents();
+          if (kids.length === 0) return App.go("#/setup-first-kid");
+        }
         App.go("#/profiles");
       } catch (err) {
         errEl.textContent = err.message || "Something went wrong. Try again!";
@@ -105,6 +133,65 @@ window.Views = (function () {
       ${cosmoSays("Almost ready for blast-off! Just tap the link in your email inbox. 📨")}
     </div>`;
     el.querySelector("#to-signin").addEventListener("click", () => welcome(el, "signin"));
+  }
+
+  /* ================= SETUP FIRST KID (post email-confirm, first sign-in) ================= */
+  async function setupFirstKid(el) {
+    const parent = await Store.getParent();
+    if (!parent?.pendingChild) return App.go("#/profiles");
+    const childName = parent.pendingChild.name || "Cadet";
+    const childSchool = parent.pendingChild.school || "";
+    let chosen = AVATARS[0];
+    el.innerHTML = `
+    <div class="view">
+      <div class="hero" style="padding-top:12px">
+        <span class="logo-rocket">🎉</span>
+        <h1>Welcome${parent.firstName ? ", " + esc(parent.firstName) : ""}!</h1>
+        <p class="tagline">Let's set up <b>${esc(childName)}</b>'s cadet card</p>
+      </div>
+      <div class="panel">
+        <div class="field"><label for="kname">Cadet name</label>
+          <input id="kname" maxlength="20" value="${esc(childName)}" required></div>
+        <div class="field"><label for="kschool">School</label>
+          <input id="kschool" maxlength="80" value="${esc(childSchool)}" required></div>
+        <label style="font-weight:700;color:var(--ink-dim);font-size:0.95rem">Pick a space buddy</label>
+        <div class="profile-grid" id="avatar-pick" style="grid-template-columns:repeat(4,1fr)">
+          ${AVATARS.map((a, i) => `<button type="button" class="profile-card${i === 0 ? " picked" : ""}" data-a="${a}" style="padding:10px">
+            <span class="avatar">${a}</span></button>`).join("")}
+        </div>
+        <div class="field mt"><label for="kpin">Secret code (4 numbers)</label>
+          <input id="kpin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="e.g. 2468" required></div>
+        <div class="form-error" id="setup-error"></div>
+        <button class="btn btn-big btn-mint" id="setup-save">Blast off! 🚀</button>
+      </div>
+      ${cosmoSays("A cadet name, a school, a space buddy, and a secret code — then we're launching! 🌠")}
+    </div>`;
+
+    const pickBox = el.querySelector("#avatar-pick");
+    pickBox.querySelectorAll(".profile-card").forEach((b) =>
+      b.addEventListener("click", () => {
+        pickBox.querySelectorAll(".profile-card").forEach((x) => (x.style.borderColor = ""));
+        b.style.borderColor = "var(--star-gold)";
+        chosen = b.dataset.a;
+      }));
+
+    el.querySelector("#setup-save").addEventListener("click", async () => {
+      const errEl = el.querySelector("#setup-error");
+      errEl.textContent = "";
+      const name = el.querySelector("#kname").value.trim();
+      const school = el.querySelector("#kschool").value.trim();
+      const pin = el.querySelector("#kpin").value.trim();
+      if (!name) return (errEl.textContent = "Every cadet needs a name!");
+      if (!school) return (errEl.textContent = "Please enter your child's school.");
+      if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "The secret code must be exactly 4 numbers.");
+      try {
+        await Store.createStudent(name, chosen, pin, school);
+        await Store.clearPendingChild();
+        App.parent = await Store.getParent();
+        Gamify.toast(`Welcome aboard, Cadet ${name}! 🚀`);
+        App.go("#/profiles");
+      } catch (err) { errEl.textContent = err.message; }
+    });
   }
 
   /* ================= PROFILE PICKER ================= */
@@ -146,6 +233,8 @@ window.Views = (function () {
       <div class="panel">
         <div class="field"><label for="kname">Cadet name</label>
           <input id="kname" maxlength="20" placeholder="First name" required></div>
+        <div class="field"><label for="kschool">School</label>
+          <input id="kschool" maxlength="80" placeholder="e.g. Sunnybrook Elementary" required></div>
         <label style="font-weight:700;color:var(--ink-dim);font-size:0.95rem">Pick your space buddy</label>
         <div class="profile-grid" id="avatar-pick" style="grid-template-columns:repeat(4,1fr)">
           ${AVATARS.map((a, i) => `<button type="button" class="profile-card${i === 0 ? " picked" : ""}" data-a="${a}" style="padding:10px">
@@ -168,12 +257,14 @@ window.Views = (function () {
     el.querySelector("#back").addEventListener("click", () => profiles(el));
     el.querySelector("#create-kid").addEventListener("click", async () => {
       const name = el.querySelector("#kname").value.trim();
+      const school = el.querySelector("#kschool").value.trim();
       const pin = el.querySelector("#kpin").value.trim();
       const errEl = el.querySelector("#kid-error");
       if (!name) return (errEl.textContent = "Every cadet needs a name!");
+      if (!school) return (errEl.textContent = "Please enter the school name.");
       if (!/^\d{4}$/.test(pin)) return (errEl.textContent = "The secret code must be exactly 4 numbers.");
       try {
-        await Store.createStudent(name, chosen, pin);
+        await Store.createStudent(name, chosen, pin, school);
         Gamify.toast(`Welcome aboard, Cadet ${name}! 🚀`);
         profiles(el);
       } catch (err) { errEl.textContent = err.message; }
@@ -620,5 +711,5 @@ window.Views = (function () {
     root.querySelector("#break-exit").addEventListener("click", () => { root.innerHTML = ""; App.resetBreakTimer(); App.go("#/dashboard"); });
   }
 
-  return { welcome, profiles, pinEntry, dashboard, map, lesson, quiz, results, badges, parentGate, parentArea, breakOverlay, cosmoSays };
+  return { welcome, setupFirstKid, profiles, pinEntry, dashboard, map, lesson, quiz, results, badges, parentGate, parentArea, breakOverlay, cosmoSays };
 })();

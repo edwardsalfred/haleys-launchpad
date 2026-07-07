@@ -17,15 +17,24 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
--- auto-create a profile row on signup
+-- Additive columns (safe on existing installs)
+alter table public.profiles add column if not exists first_name text;
+alter table public.profiles add column if not exists last_name text;
+
+-- auto-create a profile row on signup, copying name from signup metadata
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email)
+  insert into public.profiles (id, email, first_name, last_name)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'first_name',
+    new.raw_user_meta_data->>'last_name'
+  )
   on conflict (id) do nothing;
   return new;
 end;
@@ -49,6 +58,8 @@ create table if not exists public.students (
   created_at timestamptz not null default now()
 );
 create index if not exists students_parent_idx on public.students (parent_id);
+
+alter table public.students add column if not exists school text;
 
 -- ---------- module progress (one row per student × module) ----------
 create table if not exists public.module_progress (

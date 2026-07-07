@@ -48,13 +48,21 @@ const LocalStore = {
 
   async init() { return "local"; },
 
-  async signUp(email, password) {
+  async signUp(email, password, meta = {}) {
     const db = this._db();
     if (db.parent) throw new Error("This device already has a family account. Sign in instead.");
-    db.parent = { email, pwHash: await sha256("cca:" + password) };
+    db.parent = {
+      email,
+      pwHash: await sha256("cca:" + password),
+      firstName: meta.first_name || null,
+      lastName: meta.last_name || null,
+      pendingChild: meta.pending_child_name
+        ? { name: meta.pending_child_name, school: meta.pending_child_school || "" }
+        : null,
+    };
     this._save(db);
     localStorage.setItem(this.SESSION, "1");
-    return { email };
+    return { email, needsConfirmation: false };
   },
   async signIn(email, password) {
     const db = this._db();
@@ -67,16 +75,27 @@ const LocalStore = {
   async signOut() { localStorage.removeItem(this.SESSION); },
   async getParent() {
     const db = this._db();
-    return localStorage.getItem(this.SESSION) === "1" && db.parent ? { email: db.parent.email } : null;
+    if (localStorage.getItem(this.SESSION) !== "1" || !db.parent) return null;
+    const p = db.parent;
+    return {
+      email: p.email,
+      firstName: p.firstName || null,
+      lastName: p.lastName || null,
+      pendingChild: p.pendingChild || null,
+    };
+  },
+  async clearPendingChild() {
+    const db = this._db();
+    if (db.parent) { db.parent.pendingChild = null; this._save(db); }
   },
 
   async listStudents() {
     return this._db().students.map(({ pinHash, ...s }) => s);
   },
-  async createStudent(name, avatar, pin) {
+  async createStudent(name, avatar, pin, school = null) {
     const db = this._db();
     const id = uid();
-    db.students.push({ id, name, avatar, pinHash: await sha256(id + ":" + pin), xp: 0, streakCount: 0, lastActive: null });
+    db.students.push({ id, name, avatar, school, pinHash: await sha256(id + ":" + pin), xp: 0, streakCount: 0, lastActive: null });
     db.progress[id] = {}; db.badges[id] = [];
     this._save(db);
     return id;
@@ -165,8 +184,11 @@ const SupabaseStore = {
     return "supabase";
   },
 
-  async signUp(email, password) {
-    const { data, error } = await this.client.auth.signUp({ email, password });
+  async signUp(email, password, meta = {}) {
+    const { data, error } = await this.client.auth.signUp({
+      email, password,
+      options: { data: meta },
+    });
     if (error) throw new Error(error.message);
     return { email: data.user?.email || email, needsConfirmation: !data.session };
   },
@@ -178,20 +200,35 @@ const SupabaseStore = {
   async signOut() { await this.client.auth.signOut(); },
   async getParent() {
     const { data } = await this.client.auth.getSession();
-    return data.session ? { email: data.session.user.email } : null;
+    if (!data.session) return null;
+    const u = data.session.user;
+    const m = u.user_metadata || {};
+    return {
+      email: u.email,
+      firstName: m.first_name || null,
+      lastName: m.last_name || null,
+      pendingChild: m.pending_child_name
+        ? { name: m.pending_child_name, school: m.pending_child_school || "" }
+        : null,
+    };
+  },
+  async clearPendingChild() {
+    await this.client.auth.updateUser({
+      data: { pending_child_name: null, pending_child_school: null },
+    });
   },
 
   async listStudents() {
     const { data, error } = await this.client.from("students")
-      .select("id,name,avatar,xp,streak_count").order("created_at");
+      .select("id,name,avatar,xp,streak_count,school").order("created_at");
     if (error) throw new Error(error.message);
-    return data.map((s) => ({ id: s.id, name: s.name, avatar: s.avatar, xp: s.xp, streakCount: s.streak_count }));
+    return data.map((s) => ({ id: s.id, name: s.name, avatar: s.avatar, xp: s.xp, streakCount: s.streak_count, school: s.school || null }));
   },
-  async createStudent(name, avatar, pin) {
+  async createStudent(name, avatar, pin, school = null) {
     const { data: session } = await this.client.auth.getSession();
     const parentId = session.session.user.id;
     const { data, error } = await this.client.from("students")
-      .insert({ parent_id: parentId, name, avatar, pin_hash: "pending" }).select("id").single();
+      .insert({ parent_id: parentId, name, avatar, pin_hash: "pending", school }).select("id").single();
     if (error) throw new Error(error.message);
     const pinHash = await sha256(data.id + ":" + pin);
     const { error: e2 } = await this.client.from("students").update({ pin_hash: pinHash }).eq("id", data.id);
