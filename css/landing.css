@@ -1,0 +1,113 @@
+/* ============================================================
+   Haley's Launchpad — marketing landing page styles.
+   Shares tokens/fonts/starfield/buttons from css/styles.css;
+   this file is page-specific layout only.
+   ============================================================ */
+
+.lp-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+/* ---------- Nav ---------- */
+.lp-nav {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(6, 9, 25, 0.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1.5px solid rgba(255,255,255,0.08);
+}
+.lp-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; max-width: 1080px; margin: 0 auto; }
+.lp-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 1.15rem; }
+.lp-logo .grad { background: linear-gradient(92deg, var(--star-gold), var(--nebula-pink) 55%, var(--alien-mint)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp-nav-links { display: none; gap: 26px; font-weight: 700; font-size: 0.95rem; color: var(--ink-dim); }
+.lp-nav-links a:hover { color: var(--ink); }
+@media (min-width: 760px) { .lp-nav-links { display: flex; } }
+.lp-nav .btn { min-height: 42px; padding: 8px 18px; font-size: 0.92rem; }
+
+/* ---------- Hero ---------- */
+.lp-hero { padding: 64px 0 40px; display: grid; gap: 34px; align-items: center; }
+@media (min-width: 860px) { .lp-hero { grid-template-columns: 1.15fr 0.85fr; padding: 96px 0 60px; } }
+.lp-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+  background: rgba(255,197,61,0.12); border: 1.5px solid rgba(255,197,61,0.4);
+  color: var(--star-gold); font-weight: 800; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 18px;
+}
+.lp-hero h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.12; margin-bottom: 16px; }
+.lp-hero h1 .grad { background: linear-gradient(92deg, var(--star-gold), var(--nebula-pink) 55%, var(--alien-mint)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp-hero .lead { font-size: 1.15rem; color: var(--ink-dim); max-width: 46ch; margin-bottom: 26px; }
+.lp-hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.lp-hero-ctas .btn { min-height: 56px; padding: 14px 26px; font-size: 1.08rem; }
+.lp-hero-note { margin-top: 14px; font-size: 0.88rem; color: var(--ink-faint); }
+
+.lp-hero-art { position: relative; display: flex; justify-content: center; }
+.lp-hero-art svg { width: 100%; max-width: 300px; filter: drop-shadow(0 18px 40px rgba(0,0,0,0.4)); }
+.lp-hero-art .float-badge {
+  position: absolute; padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: 0.85rem;
+  background: var(--panel-solid); border: 2px solid rgba(255,255,255,0.14); box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  animation: float 3.6s ease-in-out infinite;
+}
+.lp-hero-art .fb-1 { top: 6%; left: -4%; color: var(--alien-mint); }
+.lp-hero-art .fb-2 { bottom: 10%; right: -6%; color: var(--star-gold); animation-delay: 0.8s; }
+
+/* ---------- Section shell ---------- */
+.lp-section { padding: 56px 0; scroll-margin-top: 84px; }
+.lp-section-head { text-align: center; max-width: 640px; margin: 0 auto 34px; }
+.lp-section-head h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); margin-bottom: 10px; }
+.lp-section-head p { color: var(--ink-dim); font-size: 1.05rem; }
+
+/* ---------- Video ---------- */
+.lp-video-wrap {
+  position: relative; max-width: 760px; margin: 0 auto; border-radius: 26px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.14); box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+  background: linear-gradient(135deg, #1a2255, #0f1533); aspect-ratio: 16/9;
+}
+.lp-video-wrap video { width: 100%; height: 100%; display: block; object-fit: cover; }
+.lp-video-fallback {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 20px; color: var(--ink-dim);
+}
+.lp-video-fallback .vf-emoji { font-size: 3rem; animation: float 3.2s ease-in-out infinite; }
+.lp-video-fallback b { color: var(--ink); font-family: var(--font-display); font-size: 1.15rem; }
+.lp-video-caption { text-align: center; color: var(--ink-faint); font-size: 0.9rem; margin-top: 14px; }
+
+/* ---------- Story letter ---------- */
+.lp-letter {
+  max-width: 680px; margin: 0 auto; padding: 32px 30px; border-radius: 26px;
+  background: var(--panel); border: 1.5px solid rgba(255,255,255,0.12);
+  position: relative;
+}
+.lp-letter::before { content: "💌"; position: absolute; top: -22px; left: 30px; font-size: 2.2rem; }
+.lp-letter p { margin-bottom: 14px; font-size: 1.06rem; line-height: 1.8; color: var(--ink-dim); }
+.lp-letter p:first-of-type::first-letter { font-size: 1.5em; font-family: var(--font-display); color: var(--star-gold); }
+.lp-signoff { margin-top: 20px; font-family: var(--font-display); color: var(--ink); font-size: 1.15rem; }
+.lp-signoff span { display: block; font-family: var(--font-body); font-weight: 400; font-size: 0.9rem; color: var(--ink-faint); margin-top: 2px; }
+
+/* ---------- Feature grid ---------- */
+.lp-features { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.lp-feature { padding: 22px 20px; }
+.lp-feature .lf-icon {
+  width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-size: 1.5rem;
+  background: rgba(255,197,61,0.14); margin-bottom: 14px;
+}
+.lp-feature h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.lp-feature p { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.6; }
+
+/* ---------- Trust badges ---------- */
+.lp-trust-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.lp-trust-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px;
+  background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14);
+  font-weight: 700; font-size: 0.9rem; color: var(--ink-dim);
+}
+
+/* ---------- CTA banner ---------- */
+.lp-cta-banner {
+  text-align: center; padding: 52px 24px; border-radius: 30px; margin: 0 20px;
+  background: linear-gradient(135deg, #223066 0%, #3A2A78 55%, #1F4D5E 100%);
+  border: 2px solid rgba(255,255,255,0.12);
+}
+.lp-cta-banner h2 { font-size: clamp(1.5rem, 3.6vw, 2rem); margin-bottom: 12px; }
+.lp-cta-banner p { color: var(--ink-dim); margin-bottom: 22px; max-width: 46ch; margin-inline: auto; }
+.lp-cta-banner .btn { min-height: 58px; padding: 14px 30px; font-size: 1.1rem; }
+
+/* ---------- Footer ---------- */
+.lp-footer { padding: 40px 0 60px; text-align: center; color: var(--ink-faint); font-size: 0.88rem; }
+.lp-footer a { color: var(--ink-dim); font-weight: 700; }
+.lp-footer .lp-footer-links { display: flex; gap: 18px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
