@@ -45,15 +45,23 @@
   .lp-letter { padding: 26px 20px; }
 }
 
-.lp-hero-art { position: relative; display: flex; justify-content: center; overflow: hidden; padding: 10px; }
-.lp-hero-art svg { width: 100%; max-width: 300px; filter: drop-shadow(0 18px 40px rgba(0,0,0,0.4)); }
+.lp-hero-art { position: relative; display: flex; justify-content: center; padding: 44px 10px 48px; }
+.lp-hero-art svg { width: 100%; max-width: 280px; filter: drop-shadow(0 18px 40px rgba(0,0,0,0.4)); }
 .lp-hero-art .float-badge {
   position: absolute; padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: 0.85rem;
   background: var(--panel-solid); border: 2px solid rgba(255,255,255,0.14); box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-  animation: float 3.6s ease-in-out infinite; max-width: 90%; white-space: nowrap;
+  animation: float 3.6s ease-in-out infinite; white-space: nowrap; z-index: 2;
 }
-.lp-hero-art .fb-1 { top: 6%; left: 4%; color: var(--alien-mint); }
-.lp-hero-art .fb-2 { bottom: 10%; right: 4%; color: var(--star-gold); animation-delay: 0.8s; }
+/* Mobile: badges sit above and below the alien so they never overlap it */
+.lp-hero-art .fb-1 { top: 0; left: 50%; transform: translateX(-50%); color: var(--alien-mint); }
+.lp-hero-art .fb-2 { bottom: 0; left: 50%; transform: translateX(-50%); color: var(--star-gold); animation-delay: 0.8s; }
+/* Desktop: enough horizontal room to float them at the alien's sides */
+@media (min-width: 860px) {
+  .lp-hero-art { padding: 10px; }
+  .lp-hero-art svg { max-width: 300px; }
+  .lp-hero-art .fb-1 { top: 6%; left: -4%; transform: none; }
+  .lp-hero-art .fb-2 { bottom: 10%; right: -6%; left: auto; transform: none; animation-delay: 0.8s; }
+}
 
 /* ---------- Section shell ---------- */
 .lp-section { padding: 56px 0; scroll-margin-top: 84px; }

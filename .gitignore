@@ -28,3 +28,7 @@ venv/
 # Build artifacts
 dist/
 build/
+
+# Debugging screenshots dropped in the root
+/tooclosetogether.png
+/screenshot*.png
