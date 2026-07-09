@@ -45,6 +45,80 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- ---------- signup notification email (to Paw Paw) ----------
+-- Fires when a parent CONFIRMS their email (not on raw insert), so
+-- unconfirmed typos and bots don't spam the inbox. Uses pg_net to
+-- POST to Resend asynchronously; wrapped in an exception handler so
+-- a Resend outage can never break signup.
+--
+-- Prereqs (do these ONCE in the Supabase Dashboard):
+--   1. Database → Extensions → enable `pg_net`
+--   2. Project Settings → Vault → New secret:
+--        name  = resend_api_key
+--        value = re_xxxxxxxxxxxxxxxxxxxx   (from resend.com/api-keys)
+
+create extension if not exists pg_net with schema extensions;
+
+create or replace function public.notify_paw_paw_on_confirm()
+returns trigger
+language plpgsql
+security definer set search_path = public, extensions
+as $$
+declare
+  v_resend_key   text;
+  v_first_name   text := coalesce(new.raw_user_meta_data->>'first_name', '');
+  v_last_name    text := coalesce(new.raw_user_meta_data->>'last_name', '');
+  v_child_name   text := coalesce(new.raw_user_meta_data->>'pending_child_name', '(not yet added)');
+  v_child_school text := coalesce(new.raw_user_meta_data->>'pending_child_school', '(not provided)');
+begin
+  -- Only fire on the transition from unconfirmed to confirmed
+  if new.email_confirmed_at is null then return new; end if;
+  if old.email_confirmed_at is not null then return new; end if;
+
+  begin
+    select decrypted_secret into v_resend_key
+    from vault.decrypted_secrets
+    where name = 'resend_api_key'
+    limit 1;
+
+    if v_resend_key is not null then
+      perform net.http_post(
+        url     := 'https://api.resend.com/emails',
+        headers := jsonb_build_object(
+          'Content-Type',  'application/json',
+          'Authorization', 'Bearer ' || v_resend_key
+        ),
+        body := jsonb_build_object(
+          'from',    'Haley''s Launchpad <onboarding@resend.dev>',
+          'to',      jsonb_build_array('edwardsalfred2.0@gmail.com'),
+          'subject', concat('🚀 New cadet joined Haley''s Launchpad: ', v_first_name, ' ', v_last_name),
+          'html', format(
+            '<h2 style="font-family:sans-serif">🚀 New cadet joined Haley''s Launchpad</h2>' ||
+            '<table style="font-family:sans-serif;font-size:15px;line-height:1.7">' ||
+              '<tr><td><b>Parent:</b>&nbsp;&nbsp;</td><td>%s %s</td></tr>' ||
+              '<tr><td><b>Email:</b></td><td>%s</td></tr>' ||
+              '<tr><td><b>Child:</b></td><td>%s</td></tr>' ||
+              '<tr><td><b>School:</b></td><td>%s</td></tr>' ||
+              '<tr><td><b>Confirmed:</b></td><td>%s UTC</td></tr>' ||
+            '</table>',
+            v_first_name, v_last_name, new.email, v_child_name, v_child_school, now()::text
+          )
+        )
+      );
+    end if;
+  exception when others then
+    null;  -- never fail the signup because of the notification email
+  end;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_confirmed on auth.users;
+create trigger on_auth_user_confirmed
+  after update of email_confirmed_at on auth.users
+  for each row execute function public.notify_paw_paw_on_confirm();
+
 -- ---------- students (kid profiles) ----------
 create table if not exists public.students (
   id uuid primary key default gen_random_uuid(),
