@@ -21,8 +21,35 @@ window.Quiz = (function () {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // Fisher-Yates: return a shuffled array of indices [0..n-1]
+  function shuffledOrder(n) {
+    const order = Array.from({ length: n }, (_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return order;
+  }
+
+  // Shuffle MC options so the correct answer isn't always in the same slot.
+  // Skip if q.shuffle === false (author opt-out for questions where option
+  // order matters pedagogically, e.g. "put these in order"). tf/numeric
+  // questions are untouched. Returns a new question; source module is not mutated.
+  function shuffleQuestion(q) {
+    if (q.type !== "mc" || !Array.isArray(q.options) || q.shuffle === false) return q;
+    const order = shuffledOrder(q.options.length);
+    const newQ = { ...q, options: order.map((i) => q.options[i]), answer: order.indexOf(q.answer) };
+    if (q.hints && Array.isArray(q.hints.narrow)) {
+      newQ.hints = {
+        ...q.hints,
+        narrow: q.hints.narrow.map((i) => order.indexOf(i)).filter((i) => i !== -1),
+      };
+    }
+    return newQ;
+  }
+
   function start(container, module, { onFinish }) {
-    const questions = module.quiz.questions;
+    const questions = module.quiz.questions.map(shuffleQuestion);
     const state = {
       i: 0, score: 0, hintsUsed: 0,
       results: [], // {id, correct, hintUsed}
