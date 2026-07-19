@@ -39,7 +39,15 @@ globalThis.window = { COURSE_CONTENT: [] };
 for (const f of readdirSync(join(root, "content")).filter((f) => f.endsWith(".js")).sort()) {
   new Function("window", readFileSync(join(root, "content", f), "utf8"))(globalThis.window);
 }
-const strip = (h) => String(h || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const strip = (h) => String(h || "")
+  .replace(/<[^>]+>/g, " ")
+  .replace(/&nbsp;/g, " ")
+  .replace(/×/g, " times ")
+  .replace(/÷/g, " divided by ")
+  .replace(/−/g, " minus ")
+  .replace(/=/g, " equals ")
+  .replace(/\s+/g, " ")
+  .trim();
 
 /* ---- collect slots ---- */
 const slots = [];
