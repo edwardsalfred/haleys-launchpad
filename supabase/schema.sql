@@ -119,6 +119,76 @@ create trigger on_auth_user_confirmed
   after update of email_confirmed_at on auth.users
   for each row execute function public.notify_paw_paw_on_confirm();
 
+-- ---------- contact messages (public form on contact.html) ----------
+-- Anyone (unauthenticated) can INSERT; nobody can SELECT via the anon key.
+-- Notification email is sent to Paw Paw via Resend on each new row.
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 1 and 120),
+  email text not null check (char_length(email) between 3 and 254),
+  message text not null check (char_length(message) between 1 and 4000),
+  created_at timestamptz not null default now()
+);
+
+alter table public.contact_messages enable row level security;
+
+drop policy if exists "public can send contact" on public.contact_messages;
+create policy "public can send contact" on public.contact_messages
+  for insert to anon, authenticated
+  with check (true);
+
+create or replace function public.notify_paw_paw_on_contact()
+returns trigger
+language plpgsql
+security definer set search_path = public, extensions
+as $$
+declare
+  v_resend_key text;
+begin
+  begin
+    select decrypted_secret into v_resend_key
+    from vault.decrypted_secrets
+    where name = 'resend_api_key'
+    limit 1;
+
+    if v_resend_key is not null then
+      perform net.http_post(
+        url     := 'https://api.resend.com/emails',
+        headers := jsonb_build_object(
+          'Content-Type',  'application/json',
+          'Authorization', 'Bearer ' || v_resend_key
+        ),
+        body := jsonb_build_object(
+          'from',     'Haley''s Launchpad <onboarding@resend.dev>',
+          'to',       jsonb_build_array('edwardsalfred2.0@gmail.com'),
+          'reply_to', new.email,
+          'subject',  concat('📬 New contact message from ', new.name),
+          'html', format(
+            '<h2 style="font-family:sans-serif">📬 New message from Haley''s Launchpad</h2>' ||
+            '<table style="font-family:sans-serif;font-size:15px;line-height:1.7">' ||
+              '<tr><td><b>Name:</b>&nbsp;&nbsp;</td><td>%s</td></tr>' ||
+              '<tr><td><b>Email:</b></td><td>%s</td></tr>' ||
+              '<tr><td><b>When:</b></td><td>%s UTC</td></tr>' ||
+            '</table>' ||
+            '<hr style="border:none;border-top:1px solid #ddd;margin:16px 0">' ||
+            '<div style="font-family:sans-serif;font-size:15px;line-height:1.7;white-space:pre-wrap">%s</div>',
+            new.name, new.email, new.created_at::text, new.message
+          )
+        )
+      );
+    end if;
+  exception when others then
+    null;  -- never fail the submission because of the notification email
+  end;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_contact_message on public.contact_messages;
+create trigger on_contact_message
+  after insert on public.contact_messages
+  for each row execute function public.notify_paw_paw_on_contact();
+
 -- ---------- students (kid profiles) ----------
 create table if not exists public.students (
   id uuid primary key default gen_random_uuid(),

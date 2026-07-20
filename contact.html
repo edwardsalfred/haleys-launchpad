@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0E23">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Haley's Launchpad">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="Say hello to Haley's Launchpad — send a note to Paw Paw about the app, feedback, or your cadet.">
+  <title>Contact · Haley's Launchpad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <style>
+    .lp-contact { padding: 56px 0 72px; }
+    .lp-contact-card {
+      max-width: 620px; margin: 0 auto; padding: 34px 30px; border-radius: 26px;
+      background: var(--panel); border: 1.5px solid rgba(255,255,255,0.12);
+    }
+    .lp-contact-card h1 { font-size: clamp(1.7rem, 3.8vw, 2.2rem); margin-bottom: 8px; }
+    .lp-contact-card .sub { color: var(--ink-dim); margin-bottom: 22px; font-size: 1.02rem; }
+    .lp-field { display: block; margin-bottom: 16px; }
+    .lp-field label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 0.92rem; color: var(--ink); }
+    .lp-field input,
+    .lp-field textarea {
+      width: 100%; padding: 12px 14px; border-radius: 14px; font: inherit; color: var(--ink);
+      background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.14);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .lp-field input:focus,
+    .lp-field textarea:focus {
+      outline: none; border-color: var(--alien-mint); background: rgba(62,230,192,0.08);
+    }
+    .lp-field textarea { min-height: 140px; resize: vertical; }
+    .lp-form-actions { display: flex; gap: 12px; align-items: center; margin-top: 4px; }
+    .lp-form-actions .btn { min-height: 52px; padding: 12px 24px; font-size: 1rem; }
+    .lp-form-error { color: #FF9AA2; font-size: 0.92rem; margin-top: 10px; min-height: 1.2em; }
+    .lp-form-success {
+      display: none; text-align: center; padding: 24px 10px 6px;
+    }
+    .lp-form-success .rocket { font-size: 3rem; display: block; margin-bottom: 8px; animation: float 3.2s ease-in-out infinite; }
+    .lp-form-success h2 { font-size: 1.5rem; margin-bottom: 8px; }
+    .lp-form-success p { color: var(--ink-dim); }
+    .is-sent .lp-contact-form { display: none; }
+    .is-sent .lp-form-success { display: block; }
+  </style>
+</head>
+<body>
+  <div class="starfield" aria-hidden="true">
+    <div class="stars stars-sm"></div>
+    <div class="stars stars-md"></div>
+    <div class="stars stars-lg"></div>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+  </div>
+
+  <nav class="lp-nav">
+    <div class="lp-nav-inner">
+      <a class="lp-logo" href="index.html" style="text-decoration:none;color:inherit">🚀 Haley's <span class="grad">Launchpad</span></a>
+      <div class="lp-nav-links">
+        <a href="index.html#our-story">Our Story</a>
+        <a href="index.html#how-it-works">How It Works</a>
+        <a href="index.html#standards">Standards</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <a class="btn" href="app.html#/welcome">Start Free</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="lp-wrap lp-contact">
+      <div class="lp-contact-card" id="contact-card">
+        <h1>Say hello 👋</h1>
+        <p class="sub">Questions, feedback, or a story about your cadet? Send a note straight to Paw Paw.</p>
+
+        <form class="lp-contact-form" id="contact-form" novalidate>
+          <label class="lp-field">
+            <span>Your name</span>
+            <input type="text" name="name" required maxlength="120" autocomplete="name">
+          </label>
+          <label class="lp-field">
+            <span>Email</span>
+            <input type="email" name="email" required maxlength="254" autocomplete="email">
+          </label>
+          <label class="lp-field">
+            <span>Message</span>
+            <textarea name="message" required maxlength="4000"></textarea>
+          </label>
+          <div class="lp-form-actions">
+            <button type="submit" class="btn btn-mint" id="contact-submit">Send message 🚀</button>
+          </div>
+          <div class="lp-form-error" id="contact-error" role="alert"></div>
+        </form>
+
+        <div class="lp-form-success" id="contact-success" aria-live="polite">
+          <span class="rocket" aria-hidden="true">🚀</span>
+          <h2>Message launched!</h2>
+          <p>Thanks — Paw Paw got your note and will reply as soon as he can.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <div class="lp-footer-links">
+      <a href="index.html#our-story">Our Story</a>
+      <a href="index.html#how-it-works">How It Works</a>
+      <a href="index.html#standards">Standards</a>
+      <a href="contact.html">Contact</a>
+      <a href="app.html#/welcome">Sign In</a>
+    </div>
+    <div>🚀 Haley's Launchpad. Made with love for one cadet, and now for yours too.</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    (function () {
+      const card = document.getElementById("contact-card");
+      const form = document.getElementById("contact-form");
+      const submit = document.getElementById("contact-submit");
+      const errorEl = document.getElementById("contact-error");
+
+      const client = (CCA_CONFIG.SUPABASE_URL && CCA_CONFIG.SUPABASE_ANON_KEY && window.supabase)
+        ? window.supabase.createClient(CCA_CONFIG.SUPABASE_URL, CCA_CONFIG.SUPABASE_ANON_KEY)
+        : null;
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorEl.textContent = "";
+
+        const fd = new FormData(form);
+        const name = (fd.get("name") || "").toString().trim();
+        const email = (fd.get("email") || "").toString().trim();
+        const message = (fd.get("message") || "").toString().trim();
+
+        if (!name || !email || !message) {
+          errorEl.textContent = "Please fill in your name, email, and a message.";
+          return;
+        }
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          errorEl.textContent = "That email address doesn't look right.";
+          return;
+        }
+
+        submit.disabled = true;
+        submit.textContent = "Sending…";
+
+        try {
+          if (!client) throw new Error("Contact form is not configured yet. Please email edwardsalfred2.0@gmail.com directly.");
+          const { error } = await client.from("contact_messages").insert({ name, email, message });
+          if (error) throw new Error(error.message);
+          card.classList.add("is-sent");
+        } catch (err) {
+          errorEl.textContent = err.message || "Something went wrong. Please try again.";
+          submit.disabled = false;
+          submit.textContent = "Send message 🚀";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
