@@ -16,6 +16,10 @@ for (const f of readdirSync(contentDir).filter((f) => f.endsWith(".js")).sort())
   // content files are side-effect scripts: evaluate them
   new Function("window", readFileSync(join(contentDir, f), "utf8"))(globalThis.window);
 }
+// Same deterministic MC option order the app + audio use, so recording scripts
+// list options in the order they appear on screen and in the narration.
+new Function("window", readFileSync(join(root, "js", "quiz-order.js"), "utf8"))(globalThis.window);
+const orderQuestion = globalThis.window.QuizOrder.order;
 
 const units = globalThis.window.COURSE_CONTENT
   .sort((a, b) => (a.subject === b.subject ? a.order - b.order : a.subject.localeCompare(b.subject)));
@@ -38,8 +42,9 @@ for (const unit of units) {
       slots++;
     }
     for (const q of mod.quiz?.questions || []) {
-      const script = [strip(q.passage), strip(q.prompt),
-        ...(q.options ? q.options.map((o, i) => `${"ABCD"[i]}: ${strip(o)}`) : [])]
+      const oq = orderQuestion(q, mod.id);
+      const script = [strip(oq.passage), strip(oq.prompt),
+        ...(oq.options ? oq.options.map((o, i) => `${"ABCD"[i]}: ${strip(o)}`) : [])]
         .filter(Boolean).join(" ... ");
       out += `**\`audio/${mod.id}/quiz-${q.id}.mp3\`** — quiz question ${q.id}\n\n> ${script}\n\n`;
       slots++;

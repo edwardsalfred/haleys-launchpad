@@ -21,15 +21,15 @@ window.Quiz = (function () {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  // IMPORTANT: do NOT shuffle MC option order at runtime. The "Read it to me"
-  // narration MP3s are pre-generated from the authored option order (they read
-  // "A: … B: … C: …" from content/*.js), so any runtime reshuffle makes the
-  // voiceover name options in a different order than they appear on screen.
-  // Anti-position-bias (correct answer not always first) is instead baked into
-  // the content itself, so the audio and the display always agree.
+  // Option order comes from QuizOrder.order (js/quiz-order.js) — a DETERMINISTIC
+  // per-question reorder (correct answer not always first) that is seeded by the
+  // question id, not Math.random. The audio generators apply the exact same
+  // function, so the "Read it to me" narration always names options in the same
+  // order they appear on screen. Never reshuffle here with Math.random: that
+  // desyncs the pre-generated audio (see quiz-audio-option-order-coupling).
 
   function start(container, module, { onFinish }) {
-    const questions = module.quiz.questions;
+    const questions = module.quiz.questions.map((q) => QuizOrder.order(q, module.id));
     const state = {
       i: 0, score: 0, hintsUsed: 0,
       results: [], // {id, correct, hintUsed}

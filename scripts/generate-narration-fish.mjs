@@ -36,6 +36,10 @@ globalThis.window = { COURSE_CONTENT: [] };
 for (const f of readdirSync(join(root, "content")).filter((f) => f.endsWith(".js")).sort()) {
   new Function("window", readFileSync(join(root, "content", f), "utf8"))(globalThis.window);
 }
+// Same deterministic MC option order the app uses at render time, so the audio
+// names options in the exact order they appear on screen.
+new Function("window", readFileSync(join(root, "js", "quiz-order.js"), "utf8"))(globalThis.window);
+const orderQuestion = globalThis.window.QuizOrder.order;
 const strip = (h) => String(h || "")
   .replace(/<[^>]+>/g, " ")
   .replace(/&nbsp;/g, " ")
@@ -55,8 +59,9 @@ for (const unit of globalThis.window.COURSE_CONTENT) {
       slots.push({ moduleId: mod.id, fileId: s.id, text: s.narration || strip(s.html) });
     }
     for (const q of mod.quiz?.questions || []) {
-      const text = [strip(q.passage), strip(q.prompt),
-        ...(q.options ? q.options.map((o, i) => `${"ABCD"[i]}: ${strip(o)}`) : [])]
+      const oq = orderQuestion(q, mod.id);
+      const text = [strip(oq.passage), strip(oq.prompt),
+        ...(oq.options ? oq.options.map((o, i) => `${"ABCD"[i]}: ${strip(o)}`) : [])]
         .filter(Boolean).join(" ... ");
       slots.push({ moduleId: mod.id, fileId: "quiz-" + q.id, text });
     }
