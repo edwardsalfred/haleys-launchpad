@@ -73,8 +73,46 @@ window.App = {
     newBadges.forEach((b) => Gamify.toast(`${b.emoji} New badge: ${b.name}!`));
   },
 
+  /* ---------------- error boundary ---------------- */
+  /* A throw anywhere in init()/route() used to leave #app completely empty —
+     a blank screen with no message and no way back (one dropped Supabase
+     request was enough). Always land somewhere recoverable instead, and
+     surface the detail so a grown-up can report what actually broke. */
+  fail(err) {
+    console.error("[Launchpad] fatal:", err);
+    const el = document.getElementById("app");
+    if (!el) return;
+    const detail = String((err && err.message) || err || "Unknown error")
+      .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    document.getElementById("bottom-nav")?.classList.add("hidden");
+    el.innerHTML = `
+    <div class="view center">
+      <div class="hero" style="padding-top:12px">
+        <span class="logo-rocket">🛸</span>
+        <h1 style="font-size:1.5rem">Houston, we had a problem!</h1>
+        <p class="tagline">Cosmo lost the signal for a moment.<br>Nothing you did was wrong, Cadet!</p>
+      </div>
+      <div class="panel">
+        <div class="btn-row" style="flex-direction:column">
+          <button class="btn btn-big btn-mint" id="err-retry">Try Again 🔄</button>
+          <button class="btn btn-big btn-ghost" id="err-home">Back to Start 🏠</button>
+        </div>
+        <p class="muted mt">For a grown-up: ${detail}</p>
+      </div>
+    </div>`;
+    el.querySelector("#err-retry").addEventListener("click", () => location.reload());
+    el.querySelector("#err-home").addEventListener("click", () => {
+      location.hash = "#/dashboard";
+      location.reload();
+    });
+  },
+
   /* ---------------- router ---------------- */
   async route() {
+    try { await this._route(); } catch (err) { this.fail(err); }
+  },
+
+  async _route() {
     const el = document.getElementById("app");
     const hash = location.hash || "#/dashboard";
     const [, view, arg] = hash.split("/"); // "#/lesson/math-u1-m1" → ["#", "lesson", "math-u1-m1"]
@@ -125,6 +163,10 @@ window.App = {
   },
 
   async init() {
+    try { await this._init(); } catch (err) { this.fail(err); }
+  },
+
+  async _init() {
     await Store.init();
 
     // restore session
@@ -156,5 +198,16 @@ window.App = {
     this.route();
   },
 };
+
+/* Anything that escapes a handler (a stray listener, a rejected promise) must
+   not leave a cadet staring at a blank screen either. Only take over the view
+   when it is actually empty — otherwise just log and let the screen stand. */
+function guardBlankScreen(err) {
+  const el = document.getElementById("app");
+  if (el && el.innerHTML.trim().length < 120) App.fail(err);
+  else console.error("[Launchpad]", err);
+}
+window.addEventListener("error", (e) => guardBlankScreen(e.error || e.message));
+window.addEventListener("unhandledrejection", (e) => guardBlankScreen(e.reason));
 
 document.addEventListener("DOMContentLoaded", () => App.init());
