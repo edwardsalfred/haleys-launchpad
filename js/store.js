@@ -22,6 +22,8 @@
      touchStreak(studentId) → streakCount
      saveWriting(studentId, moduleId, prompt, text)
      listWritings(parent scope) → [...]
+     deleteAccount() → permanently removes the parent account and, via
+       on-delete-cascade, every child profile and all of their progress.
    ============================================================ */
 
 async function sha256(text) {
@@ -172,6 +174,12 @@ const LocalStore = {
     this._save(db);
   },
   async listWritings() { return this._db().writings; },
+
+  async deleteAccount() {
+    localStorage.removeItem(this.KEY);
+    localStorage.removeItem(this.SESSION);
+    localStorage.removeItem("cca_active_student");
+  },
 };
 
 /* ---------------- Supabase implementation ---------------- */
@@ -328,6 +336,15 @@ const SupabaseStore = {
       .select("id,student_id,module_id,prompt,response,created_at").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data.map((w) => ({ id: w.id, studentId: w.student_id, moduleId: w.module_id, prompt: w.prompt, text: w.response, at: w.created_at }));
+  },
+
+  async deleteAccount() {
+    // Deletes the caller's auth.users row; cascade wipes profile, kids, progress.
+    const { error } = await this.client.rpc("delete_current_user");
+    if (error) throw new Error(error.message);
+    // The account is gone; clear the (now-orphaned) local session too.
+    try { await this.client.auth.signOut(); } catch { /* session already invalid */ }
+    localStorage.removeItem("cca_active_student");
   },
 };
 

@@ -678,6 +678,15 @@ window.Views = (function () {
           <button class="btn btn-coral" id="signout">Sign out</button>
         </div>
       </div>
+
+      <div class="panel mt danger-zone">
+        <h3>⚠️ Delete account</h3>
+        <p class="muted mt">Permanently delete your account${kids.length ? ` and ${kids.length === 1 ? "your cadet" : `all ${kids.length} cadets`}` : ""}.
+        This erases every profile, all progress, quiz history, badges, and saved writing. This cannot be undone.</p>
+        <div class="btn-row">
+          <button class="btn btn-danger" id="delete-account">Delete my account</button>
+        </div>
+      </div>
     </div>`;
 
     el.querySelector("[data-route]").addEventListener("click", (e) => App.go(e.currentTarget.dataset.route));
@@ -689,6 +698,59 @@ window.Views = (function () {
       App.parent = null; App.student = null; localStorage.removeItem("cca_active_student");
       App.go("#/welcome");
     });
+    el.querySelector("#delete-account").addEventListener("click", () => confirmDeleteAccount(kids));
+  }
+
+  /* ================= DELETE ACCOUNT ================= */
+  /* Irreversible: require the parent to type DELETE, then wipe the account
+     (Store.deleteAccount cascades to every child + all their data). */
+  function confirmDeleteAccount(kids) {
+    const root = document.getElementById("overlay-root");
+    const names = kids.map((k) => `${k.avatar} ${esc(k.name)}`).join(", ");
+    root.innerHTML = `
+    <div class="overlay">
+      <div class="panel">
+        <div class="o-emoji">🗑️</div>
+        <h3>Delete your account?</h3>
+        <p>This permanently erases your account${names ? ` and every cadet on it (${names})` : ""},
+        including all progress, quiz history, badges, and saved writing.
+        <b>This cannot be undone.</b></p>
+        <p class="form-note">Type <b>DELETE</b> to confirm:</p>
+        <div class="field"><input id="del-confirm" autocomplete="off" autocapitalize="characters"
+          placeholder="DELETE" style="text-align:center;letter-spacing:2px"></div>
+        <div class="form-error" id="del-err"></div>
+        <div class="btn-row" style="flex-direction:column">
+          <button class="btn btn-big btn-danger" id="del-go" disabled>Delete forever</button>
+          <button class="btn btn-big btn-ghost" id="del-cancel">Keep my account</button>
+        </div>
+      </div>
+    </div>`;
+
+    const input = root.querySelector("#del-confirm");
+    const goBtn = root.querySelector("#del-go");
+    const errEl = root.querySelector("#del-err");
+    const close = () => { root.innerHTML = ""; };
+
+    input.addEventListener("input", () => {
+      goBtn.disabled = input.value.trim().toUpperCase() !== "DELETE";
+    });
+    root.querySelector("#del-cancel").addEventListener("click", close);
+
+    goBtn.addEventListener("click", async () => {
+      if (input.value.trim().toUpperCase() !== "DELETE") return;
+      goBtn.disabled = true; goBtn.textContent = "Deleting…"; errEl.textContent = "";
+      try {
+        await Store.deleteAccount();
+        App.parent = null; App.student = null;
+        close();
+        App.go("#/welcome");
+      } catch (err) {
+        errEl.textContent = (err && err.message) || "Something went wrong. Please try again.";
+        goBtn.disabled = false; goBtn.textContent = "Delete forever";
+      }
+    });
+
+    input.focus();
   }
 
   /* ================= BREAK OVERLAY ================= */

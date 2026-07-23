@@ -164,6 +164,12 @@ img, svg { max-width: 100%; }
   border: 2px dashed rgba(255,255,255,0.25); box-shadow: none; font-weight: 500;
 }
 .btn-ghost:active { transform: scale(0.97); }
+.btn-danger { background: #E5484D; box-shadow: 0 5px 0 #A31219; color: #fff; }
+.btn-danger:active { box-shadow: 0 1px 0 #A31219; }
+
+/* Delete-account panel: clearly set apart from the everyday controls above it. */
+.danger-zone { border: 1.5px solid rgba(229,72,77,0.45); background: rgba(229,72,77,0.06); }
+.danger-zone h3 { color: #FF9AA2; }
 
 .btn-row { display: flex; gap: 10px; margin-top: 14px; }
 .btn-row .btn { flex: 1; }

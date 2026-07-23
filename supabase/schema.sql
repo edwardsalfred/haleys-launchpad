@@ -298,6 +298,30 @@ begin
 end;
 $$;
 
+-- Self-serve account deletion. The browser only holds the anon key, which
+-- cannot touch auth.users — so deletion runs through this SECURITY DEFINER
+-- function (owned by postgres) that removes ONLY the caller's own auth row.
+-- The on-delete-cascade chain does the rest:
+--   auth.users → profiles → students → module_progress / quiz_attempts
+--                                       / badges / writing_submissions
+-- so a parent deleting their account also erases every child and all progress.
+create or replace function public.delete_current_user()
+returns void
+language plpgsql
+security definer set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Not signed in';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+-- Only a signed-in user may call it, and only ever to delete themselves.
+revoke all on function public.delete_current_user() from public, anon;
+grant execute on function public.delete_current_user() to authenticated;
+
 -- ---------- Row Level Security ----------
 alter table public.profiles enable row level security;
 alter table public.students enable row level security;
